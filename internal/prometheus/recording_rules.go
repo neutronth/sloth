@@ -108,7 +108,7 @@ func rawSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlert
 func eventsSLIRecordGenerator(slo SLO, window time.Duration, alerts alert.MWMBAlertGroup) (*rulefmt.Rule, error) {
 	const sliExprTplFmt = `(%s)
 /
-(%s)
+((%s) > 0)
 `
 	// Generate our first level of template by assembling the error and total expressions.
 	sliExprTpl := fmt.Sprintf(sliExprTplFmt, slo.SLI.Events.ErrorQuery, slo.SLI.Events.TotalQuery)
@@ -155,7 +155,7 @@ func optimizedSLIRecordGenerator(slo SLO, window, shortWindow time.Duration) (*r
 	// - https://math.stackexchange.com/questions/95909/why-is-an-average-of-an-average-usually-incorrect
 	const sliExprTplFmt = `sum_over_time({{.metric}}{{.filter}}[{{.window}}])
 / ignoring ({{.windowKey}})
-count_over_time({{.metric}}{{.filter}}[{{.window}}])
+(count_over_time({{.metric}}{{.filter}}[{{.window}}]) > 0)
 `
 
 	if window == shortWindow {
@@ -285,7 +285,7 @@ func (m metadataRecordingRulesGenerator) GenerateMetadataRecordingRules(ctx cont
 		// Total Error budget remaining period.
 		{
 			Record: metricSLOPeriodErrorBudgetRemainingRatio,
-			Expr:   fmt.Sprintf(`1 - %s%s`, metricSLOPeriodBurnRateRatio, sloFilter),
+			Expr:   fmt.Sprintf(`(1 - %s%s) >= 0`, metricSLOPeriodBurnRateRatio, sloFilter),
 			Labels: labels,
 		},
 
